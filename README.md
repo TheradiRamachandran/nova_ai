@@ -1,0 +1,30 @@
+# Nova AI
+
+A small AI chat app built with HTML, CSS, browser JavaScript, and Node.js. The browser sends messages to the local server; the server calls Mistral so your API key is never included in browser code.
+
+## Setup
+
+1. Revoke any API key that was pasted into chat, then create a replacement in your Mistral account.
+2. Copy `.env.example` to `.env`.
+3. Open `.env` and replace the example values with your new Mistral API key and a long, private app password. Do not share or commit this file.
+4. Install [Node.js 20.12 or newer](https://nodejs.org/).
+5. In this folder, run:
+
+   ```powershell
+   npm start
+   ```
+
+6. Open <http://127.0.0.1:3000> in your browser.
+
+The server listens on your own computer only by default. Set a different port with the `PORT` environment variable if needed.
+
+## Deploy to Render
+
+This project includes a `render.yaml` Blueprint for deploying the Node.js server and static chat UI together. The public site requires sign-in so visitors cannot use your Mistral API key through the chat endpoint.
+
+1. Push this project to the GitHub repository.
+2. In Render, create a new **Blueprint** and select that repository.
+3. When prompted, set `MISTRAL_API_KEY` to your Mistral API key and set `APP_PASSWORD` to a strong, unique password. These are Render secrets; do not put real values in `render.yaml` or GitHub.
+4. Deploy the Blueprint and open the Render URL. Sign in using your `APP_PASSWORD`.
+
+Render supplies the port automatically. The app binds to `0.0.0.0` in the hosted environment and uses a signed, HTTP-only session cookie for sign-in.

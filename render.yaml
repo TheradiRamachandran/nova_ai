@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nova-ai
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: APP_PASSWORD
+        sync: false

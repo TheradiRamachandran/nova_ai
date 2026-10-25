@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111214" />
+    <title>Nova AI</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Nova AI home">
+          <span class="brand-mark" aria-hidden="true">N</span>
+          <span>nova<span class="brand-light"> ai</span></span>
+        </a>
+        <div class="model-label"><span class="status-dot"></span>Nova AI</div>
+        <button class="logout-button" id="logout-button" type="button" hidden>Sign out</button>
+      </header>
+
+      <section class="login-panel" id="login-panel" aria-label="Sign in to Nova AI" hidden>
+        <div class="login-mark" aria-hidden="true">N</div>
+        <p class="eyebrow">PRIVATE AI ASSISTANT</p>
+        <h1>Welcome back</h1>
+        <p class="welcome-copy">Enter your app password to continue.</p>
+        <form class="login-form" id="login-form">
+          <label class="visually-hidden" for="app-password">App password</label>
+          <input id="app-password" name="password" type="password" autocomplete="current-password" placeholder="App password" required />
+          <button class="login-button" type="submit">Sign in</button>
+          <p class="login-error" id="login-error" role="alert"></p>
+        </form>
+      </section>
+
+      <section class="chat-panel" id="chat-panel" aria-label="Chat with Nova AI" hidden>
+        <div class="conversation" id="conversation" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="welcome-mark" aria-hidden="true">N</div>
+            <p class="eyebrow">YOUR AI ASSISTANT</p>
+            <h1>What can I help<br />you with today?</h1>
+            <p class="welcome-copy">Ask a question, explore an idea, or get help with a task.</p>
+            <div class="suggestions" aria-label="Try asking">
+              <button class="suggestion" type="button" data-prompt="Explain a tricky idea in simple terms">
+                <span aria-hidden="true">✳</span> Explain a tricky idea
+              </button>
+              <button class="suggestion" type="button" data-prompt="Help me brainstorm a creative project">
+                <span aria-hidden="true">⌁</span> Brainstorm ideas
+              </button>
+              <button class="suggestion" type="button" data-prompt="Write a short, friendly introduction for me">
+                <span aria-hidden="true">↗</span> Help me write
+              </button>
+            </div>
+          </div>
+          <div class="messages" id="messages"></div>
+        </div>
+
+        <form class="composer" id="chat-form">
+          <label class="visually-hidden" for="prompt">Message Nova AI</label>
+          <textarea id="prompt" name="prompt" rows="1" maxlength="6000" placeholder="Message Nova AI..." required></textarea>
+          <div class="composer-footer">
+            <span class="hint" id="status" role="status">AI can make mistakes. Check important information.</span>
+            <button class="send-button" id="send-button" type="submit" aria-label="Send message">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M10 4l6 6-6 6" /></svg>
+            </button>
+          </div>
+        </form>
+        <p class="setup-note" id="setup-note" hidden>To get started, add your Mistral API key to the local <code>.env</code> file.</p>
+      </section>
+    </main>
+  </body>
+</html>
