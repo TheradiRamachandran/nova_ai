@@ -16,6 +16,7 @@
           <span>nova<span class="brand-light"> ai</span></span>
         </a>
         <div class="model-label"><span class="status-dot"></span>Nova AI</div>
+        <button class="pdf-open-button" id="pdf-open-button" type="button" hidden>PDF workspace</button>
         <button class="logout-button" id="logout-button" type="button" hidden>Sign out</button>
       </header>
 
@@ -64,8 +65,68 @@
             </button>
           </div>
         </form>
-        <p class="setup-note" id="setup-note" hidden>To get started, add your Groq API key to the local <code>.env</code> file.</p>
+        <p class="setup-note" id="setup-note" hidden>To get started, add a Mistral or Groq API key to the local <code>.env</code> file.</p>
+      </section>
+
+      <section class="pdf-panel" id="pdf-panel" aria-label="PDF workspace" hidden>
+        <header class="pdf-heading">
+          <div>
+            <p class="eyebrow">PDF WORKSPACE</p>
+            <h1>Edit and explore a PDF</h1>
+          </div>
+          <button class="pdf-back-button" id="pdf-back-button" type="button">Back to chat</button>
+        </header>
+        <div class="pdf-toolbar" role="toolbar" aria-label="PDF editing tools">
+          <label class="pdf-tool-button upload-button" for="pdf-file-input">Open PDF</label>
+          <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" hidden />
+          <button class="pdf-tool-button" id="pdf-merge-button" type="button" disabled>Merge PDF</button>
+          <input id="pdf-merge-input" type="file" accept="application/pdf,.pdf" hidden />
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button class="pdf-tool-button" data-tool="text" type="button" disabled>Add text</button>
+          <button class="pdf-tool-button" data-tool="replace" type="button" disabled>Replace area</button>
+          <button class="pdf-tool-button" data-tool="highlight" type="button" disabled>Highlight</button>
+          <button class="pdf-tool-button" data-tool="draw" type="button" disabled>Draw</button>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button class="pdf-tool-button" id="pdf-rotate-button" type="button" disabled>Rotate</button>
+          <button class="pdf-tool-button" id="pdf-delete-button" type="button" disabled>Delete page</button>
+          <button class="pdf-tool-button pdf-export-button" id="pdf-export-button" type="button" disabled>Download edited PDF</button>
+        </div>
+        <div class="pdf-layout">
+          <aside class="pdf-pages" aria-label="Document pages">
+            <div class="pdf-pages-heading"><span>Pages</span><span id="pdf-page-count">0</span></div>
+            <div class="pdf-page-list" id="pdf-page-list"></div>
+            <div class="pdf-reorder">
+              <button class="pdf-tool-button" id="pdf-page-up" type="button" disabled>Move up</button>
+              <button class="pdf-tool-button" id="pdf-page-down" type="button" disabled>Move down</button>
+            </div>
+          </aside>
+          <div class="pdf-main">
+            <div class="pdf-status" id="pdf-status" role="status">Open a PDF to begin. Your file stays in this browser.</div>
+            <div class="pdf-stage-wrap">
+              <div class="pdf-stage" id="pdf-stage" aria-label="PDF page preview">
+                <canvas id="pdf-canvas"></canvas>
+                <canvas id="pdf-annotations" aria-label="PDF annotation surface"></canvas>
+                <div class="pdf-empty" id="pdf-empty">
+                  <div class="pdf-empty-icon" aria-hidden="true">PDF</div>
+                  <h2>Bring your document</h2>
+                  <p>Open a PDF to ask Nova questions, add notes, mark it up, or manage its pages.</p>
+                </div>
+              </div>
+            </div>
+            <div class="pdf-ai">
+              <form class="pdf-ai-form" id="pdf-ai-form">
+                <label class="visually-hidden" for="pdf-ai-prompt">Ask Nova about this PDF or request an edit</label>
+                <textarea id="pdf-ai-prompt" rows="2" maxlength="3000" placeholder="Ask a question about this PDF or request text to add to the current page..." disabled></textarea>
+                <button class="pdf-tool-button pdf-ai-button" id="pdf-ai-button" type="submit" disabled>Ask Nova</button>
+              </form>
+              <p class="pdf-privacy-note">The original PDF stays in this browser. Asking Nova sends up to 36,000 characters of extracted text to your configured AI provider.</p>
+              <div class="pdf-ai-result" id="pdf-ai-result" aria-live="polite" hidden></div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
+    <script src="/vendor/pdf-lib.min.js" defer></script>
+    <script type="module" src="/pdf-editor.js"></script>
   </body>
 </html>

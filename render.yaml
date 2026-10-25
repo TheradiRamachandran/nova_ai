@@ -11,5 +11,7 @@ services:
         value: 0.0.0.0
       - key: GROQ_API_KEY
         sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
       - key: APP_PASSWORD
         sync: false

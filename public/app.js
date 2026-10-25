@@ -12,6 +12,9 @@ const loginForm = document.querySelector("#login-form");
 const passwordInput = document.querySelector("#app-password");
 const loginError = document.querySelector("#login-error");
 const logoutButton = document.querySelector("#logout-button");
+const pdfOpenButton = document.querySelector("#pdf-open-button");
+const pdfPanel = document.querySelector("#pdf-panel");
+const pdfBackButton = document.querySelector("#pdf-back-button");
 const history = [];
 let authenticationRequired = false;
 
@@ -19,8 +22,25 @@ function showAuthenticatedState(authenticated) {
   chatPanel.hidden = !authenticated;
   loginPanel.hidden = authenticated;
   logoutButton.hidden = !authenticated || !authenticationRequired;
+  pdfOpenButton.hidden = !authenticated;
+  if (!authenticated) {
+    pdfPanel.hidden = true;
+    window.dispatchEvent(new Event("nova:logout"));
+  }
   if (!authenticated) passwordInput.focus();
 }
+
+window.addEventListener("nova:session-expired", () => showAuthenticatedState(false));
+
+pdfOpenButton.addEventListener("click", () => {
+  chatPanel.hidden = true;
+  pdfPanel.hidden = false;
+});
+
+pdfBackButton.addEventListener("click", () => {
+  pdfPanel.hidden = true;
+  chatPanel.hidden = false;
+});
 
 function addMessage(role, content, pending = false) {
   const row = document.createElement("div");
@@ -47,6 +67,7 @@ async function sendMessage(text) {
 
   welcome.hidden = true;
   history.push({ role: "user", content });
+  if (history.length > 20) history.splice(0, history.length - 20);
   addMessage("user", content);
   promptInput.value = "";
   promptInput.style.height = "auto";
@@ -69,7 +90,7 @@ async function sendMessage(text) {
             ? ` Try again in about ${Math.ceil(retryAfter)} seconds.`
             : "";
         throw new Error(
-          `Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.${waitMessage}`,
+          `${result.error || "The AI provider is rate-limiting Nova AI."}${waitMessage}`,
         );
       }
       if (response.status === 401) {
@@ -86,6 +107,7 @@ async function sendMessage(text) {
     setupNote.hidden = true;
     status.textContent = "AI can make mistakes. Check important information.";
   } catch (error) {
+    history.pop();
     pendingBubble.textContent = error.message || "Something went wrong. Please try again.";
     pendingBubble.classList.remove("pending");
     status.textContent = "There was a problem with your request.";

@@ -10,7 +10,7 @@ if (existsSync(path.join(__dirname, ".env"))) {
 
 const HOST = process.env.HOST || "127.0.0.1";
 const PORT = Number(process.env.PORT) || 3000;
-const MAX_BODY_BYTES = 64 * 1024;
+const MAX_BODY_BYTES = 256 * 1024;
 const SESSION_COOKIE = "nova_session";
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -21,7 +21,13 @@ const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
   ".svg": "image/svg+xml",
+};
+const PDF_VENDOR_FILES = {
+  "/vendor/pdf.mjs": path.join(__dirname, "node_modules", "pdfjs-dist", "build", "pdf.mjs"),
+  "/vendor/pdf.worker.mjs": path.join(__dirname, "node_modules", "pdfjs-dist", "build", "pdf.worker.mjs"),
+  "/vendor/pdf-lib.min.js": path.join(__dirname, "node_modules", "pdf-lib", "dist", "pdf-lib.min.js"),
 };
 
 function sendJson(response, statusCode, data) {
@@ -130,10 +136,24 @@ async function handleChat(request, response) {
     return sendJson(response, 401, { error: "Please sign in to use Nova AI." });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
+  const provider = process.env.MISTRAL_API_KEY
+    ? {
+        name: "Mistral",
+        apiKey: process.env.MISTRAL_API_KEY,
+        url: "https://api.mistral.ai/v1/chat/completions",
+        model: "mistral-small-latest",
+      }
+    : process.env.GROQ_API_KEY
+      ? {
+          name: "Groq",
+          apiKey: process.env.GROQ_API_KEY,
+          url: "https://api.groq.com/openai/v1/chat/completions",
+          model: "openai/gpt-oss-20b",
+        }
+      : null;
+  if (!provider) {
     return sendJson(response, 503, {
-      error: "Groq is not configured. Add GROQ_API_KEY to your .env file and restart the app.",
+      error: "AI chat is not configured. Add MISTRAL_API_KEY or GROQ_API_KEY to your .env file and restart the app.",
     });
   }
 
@@ -160,23 +180,23 @@ async function handleChat(request, response) {
         !["user", "assistant"].includes(message.role) ||
         typeof message.content !== "string" ||
         message.content.trim().length === 0 ||
-        message.content.length > 6000,
+        message.content.length > 50000,
     )
   ) {
     return sendJson(response, 400, {
-      error: "Send between 1 and 20 user/assistant messages, each up to 6,000 characters.",
+      error:       "Send between 1 and 20 user/assistant messages, each up to 50,000 characters.",
     });
   }
 
   try {
-    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const upstream = await fetch(provider.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-20b",
+        model: provider.model,
         messages,
       }),
       signal: AbortSignal.timeout(60_000),
@@ -197,12 +217,12 @@ async function handleChat(request, response) {
         }
 
         const error =
-          "Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.";
+          `${provider.name} is rate-limiting Nova AI. Wait a little and try again, or check your ${provider.name} account usage and rate limits.`;
         if (retryAfterSeconds !== undefined) {
           response.setHeader("Retry-After", String(retryAfterSeconds));
         }
-        console.error("Groq API rate limit reached.");
-        return sendJson(response, 429, { error, retryAfterSeconds });
+        console.error(`${provider.name} API rate limit reached.`);
+        return sendJson(response, 429, { error, retryAfterSeconds, provider: provider.name });
       }
 
       const detail =
@@ -211,22 +231,22 @@ async function handleChat(request, response) {
         result?.detail;
       const message =
         typeof detail === "string"
-          ? `Groq API returned HTTP ${upstream.status}: ${detail}`
-          : `Groq API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
+          ? `${provider.name} API returned HTTP ${upstream.status}: ${detail}`
+          : `${provider.name} API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
       console.error(message);
       return sendJson(response, 502, { error: message });
     }
 
     const reply = result.choices?.[0]?.message?.content;
     if (typeof reply !== "string" || !reply.trim()) {
-      return sendJson(response, 502, { error: "Groq returned an empty response." });
+      return sendJson(response, 502, { error: `${provider.name} returned an empty response.` });
     }
 
     return sendJson(response, 200, { reply });
   } catch (error) {
-    console.error("Groq request failed:", error.message);
+    console.error(`${provider.name} request failed:`, error.message);
     return sendJson(response, 502, {
-      error: "Could not reach Groq. Check your connection and try again.",
+      error: `Could not reach ${provider.name}. Check your connection and try again.`,
     });
   }
 }
@@ -343,6 +363,22 @@ const server = http.createServer(async (request, response) => {
       handleLogout(request, response);
     } else if (pathname === "/api/chat") {
       await handleChat(request, response);
+    } else if (PDF_VENDOR_FILES[pathname]) {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        response.setHeader("Allow", "GET, HEAD");
+        response.writeHead(405);
+        return response.end("Method not allowed");
+      }
+      const vendorFile = PDF_VENDOR_FILES[pathname];
+      const content = await readFile(vendorFile);
+      response.writeHead(200, {
+        "Content-Type": MIME_TYPES[path.extname(vendorFile)] || "application/octet-stream",
+        "Content-Length": content.length,
+        "Cache-Control": "public, max-age=86400",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; worker-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+      });
+      return response.end(request.method === "HEAD" ? undefined : content);
     } else {
       await serveStatic(request, response, pathname);
     }
@@ -357,5 +393,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Groq chat is running at http://${HOST}:${PORT}`);
+  console.log(`Nova AI is running at http://${HOST}:${PORT}`);
 });
