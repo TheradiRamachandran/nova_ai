@@ -69,7 +69,7 @@ async function sendMessage(text) {
             ? ` Try again in about ${Math.ceil(retryAfter)} seconds.`
             : "";
         throw new Error(
-          `Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.${waitMessage}`,
+          `Nova AI has reached Gemini's free-tier limit. Wait for the quota to reset and try again.${waitMessage}`,
         );
       }
       if (response.status === 401) {

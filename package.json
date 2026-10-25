@@ -2,7 +2,7 @@
   "name": "nova-ai",
   "version": "1.0.0",
   "private": true,
-  "description": "A private Nova AI chat app powered by Groq",
+  "description": "A private Nova AI chat app powered by Gemini's free tier",
   "engines": {
     "node": ">=20.12.0"
   },
