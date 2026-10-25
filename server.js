@@ -130,10 +130,10 @@ async function handleChat(request, response) {
     return sendJson(response, 401, { error: "Please sign in to use Nova AI." });
   }
 
-  const apiKey = process.env.MISTRAL_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return sendJson(response, 503, {
-      error: "Mistral is not configured. Add MISTRAL_API_KEY to your .env file and restart the app.",
+      error: "Groq is not configured. Add GROQ_API_KEY to your .env file and restart the app.",
     });
   }
 
@@ -169,14 +169,14 @@ async function handleChat(request, response) {
   }
 
   try {
-    const upstream = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral-small-latest",
+        model: "llama-3.3-70b-versatile",
         messages,
       }),
       signal: AbortSignal.timeout(60_000),
@@ -197,11 +197,11 @@ async function handleChat(request, response) {
         }
 
         const error =
-          "Mistral is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Mistral account usage, credits, and rate limits.";
+          "Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.";
         if (retryAfterSeconds !== undefined) {
           response.setHeader("Retry-After", String(retryAfterSeconds));
         }
-        console.error("Mistral API rate limit reached.");
+        console.error("Groq API rate limit reached.");
         return sendJson(response, 429, { error, retryAfterSeconds });
       }
 
@@ -211,20 +211,20 @@ async function handleChat(request, response) {
         result?.detail;
       const message =
         typeof detail === "string"
-          ? `Mistral API returned HTTP ${upstream.status}: ${detail}`
-          : `Mistral API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
+          ? `Groq API returned HTTP ${upstream.status}: ${detail}`
+          : `Groq API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
       console.error(message);
       return sendJson(response, 502, { error: message });
     }
 
     const reply = result.choices?.[0]?.message?.content;
     if (typeof reply !== "string" || !reply.trim()) {
-      return sendJson(response, 502, { error: "Mistral returned an empty response." });
+      return sendJson(response, 502, { error: "Groq returned an empty response." });
     }
 
     return sendJson(response, 200, { reply });
   } catch (error) {
-    console.error("Mistral request failed:", error.message);
+    console.error("Groq request failed:", error.message);
     return sendJson(response, 502, {
       error: "Could not reach Mistral. Check your connection and try again.",
     });

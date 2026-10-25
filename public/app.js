@@ -69,7 +69,7 @@ async function sendMessage(text) {
             ? ` Try again in about ${Math.ceil(retryAfter)} seconds.`
             : "";
         throw new Error(
-          `Mistral is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Mistral account usage, credits, and rate limits.${waitMessage}`,
+          `Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.${waitMessage}`,
         );
       }
       if (response.status === 401) {

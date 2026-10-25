@@ -1,12 +1,12 @@
 # Nova AI
 
-A small AI chat app built with HTML, CSS, browser JavaScript, and Node.js. The browser sends messages to the local server; the server calls Mistral so your API key is never included in browser code.
+A small AI chat app built with HTML, CSS, browser JavaScript, and Node.js. The browser sends messages to the local server; the server calls Groq's Llama API so your API key is never included in browser code.
 
 ## Setup
 
-1. Revoke any API key that was pasted into chat, then create a replacement in your Mistral account.
+1. Create a Groq API key at <https://console.groq.com/keys>. Do not share or commit it.
 2. Copy `.env.example` to `.env`.
-3. Open `.env` and replace the example values with your new Mistral API key and a long, private app password. Do not share or commit this file.
+3. Open `.env` and replace the example values with your Groq API key and a long, private app password. Do not share or commit this file.
 4. Install [Node.js 20.12 or newer](https://nodejs.org/).
 5. In this folder, run:
 
@@ -20,13 +20,13 @@ The server listens on your own computer only by default. Set a different port wi
 
 ## Deploy to Render
 
-This project includes a `render.yaml` Blueprint for deploying the Node.js server and static chat UI together. The public site requires sign-in so visitors cannot use your Mistral API key through the chat endpoint.
+This project includes a `render.yaml` Blueprint for deploying the Node.js server and static chat UI together. The public site requires sign-in so visitors cannot use your Groq API key through the chat endpoint.
 
 1. Push this project to the GitHub repository.
 2. In Render, create a new **Blueprint** and select that repository.
-3. When prompted, set `MISTRAL_API_KEY` to your Mistral API key and set `APP_PASSWORD` to a strong, unique password. These are Render secrets; do not put real values in `render.yaml` or GitHub.
+3. When prompted, set `GROQ_API_KEY` to your Groq API key and set `APP_PASSWORD` to a strong, unique password. These are Render secrets; do not put real values in `render.yaml` or GitHub.
 4. Deploy the Blueprint and open the Render URL. Sign in using your `APP_PASSWORD`.
 
 Render supplies the port automatically. The app binds to `0.0.0.0` in the hosted environment and uses a signed, HTTP-only session cookie for sign-in.
 
-If chat reports that Mistral is rate-limiting Nova AI, wait and retry. If the issue continues, check the Mistral account's usage, credits, and rate limits. This app does not automatically retry rate-limited requests.
+Nova AI uses Groq's OpenAI-compatible chat completions API with the `llama-3.3-70b-versatile` model. Groq's free access has rate limits; check the Groq console for the current limits. If chat is rate-limited, wait and retry. This app does not automatically retry rate-limited requests.
