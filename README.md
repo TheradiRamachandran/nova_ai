@@ -1,6 +1,6 @@
 # Nova AI
 
-A small AI chat app built with HTML, CSS, browser JavaScript, and Node.js. The browser sends messages to the local server; the server calls Groq's Llama API so your API key is never included in browser code.
+A small AI chat app built with HTML, CSS, browser JavaScript, and Node.js. The browser sends messages to the local server; the server calls Groq's API so your API key is never included in browser code.
 
 ## Setup
 
@@ -29,4 +29,4 @@ This project includes a `render.yaml` Blueprint for deploying the Node.js server
 
 Render supplies the port automatically. The app binds to `0.0.0.0` in the hosted environment and uses a signed, HTTP-only session cookie for sign-in.
 
-Nova AI uses Groq's OpenAI-compatible chat completions API with the `llama-3.3-70b-versatile` model. Groq's free access has rate limits; check the Groq console for the current limits. If chat is rate-limited, wait and retry. This app does not automatically retry rate-limited requests.
+Nova AI uses Groq's OpenAI-compatible chat completions API with the `openai/gpt-oss-20b` model. Groq currently lists this model with token-based pricing; check the [model page](https://console.groq.com/docs/model/openai/gpt-oss-20b) and your account's usage limits before using it. If chat is rate-limited, wait and retry. This app does not automatically retry rate-limited requests.

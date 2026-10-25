@@ -176,7 +176,7 @@ async function handleChat(request, response) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-20b",
         messages,
       }),
       signal: AbortSignal.timeout(60_000),
@@ -226,7 +226,7 @@ async function handleChat(request, response) {
   } catch (error) {
     console.error("Groq request failed:", error.message);
     return sendJson(response, 502, {
-      error: "Could not reach Mistral. Check your connection and try again.",
+      error: "Could not reach Groq. Check your connection and try again.",
     });
   }
 }
@@ -357,5 +357,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Mistral chat is running at http://${HOST}:${PORT}`);
+  console.log(`Groq chat is running at http://${HOST}:${PORT}`);
 });
