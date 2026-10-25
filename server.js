@@ -130,10 +130,10 @@ async function handleChat(request, response) {
     return sendJson(response, 401, { error: "Please sign in to use Nova AI." });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return sendJson(response, 503, {
-      error: "Gemini is not configured. Add GEMINI_API_KEY to your .env file and restart the app.",
+      error: "Groq is not configured. Add GROQ_API_KEY to your .env file and restart the app.",
     });
   }
 
@@ -169,23 +169,18 @@ async function handleChat(request, response) {
   }
 
   try {
-    const upstream = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "x-goog-api-key": apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: messages.map((message) => ({
-            role: message.role === "assistant" ? "model" : "user",
-            parts: [{ text: message.content }],
-          })),
-        }),
-        signal: AbortSignal.timeout(60_000),
+    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        model: "openai/gpt-oss-20b",
+        messages,
+      }),
+      signal: AbortSignal.timeout(60_000),
+    });
 
     const result = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
@@ -202,11 +197,11 @@ async function handleChat(request, response) {
         }
 
         const error =
-          "Gemini's free-tier limit has been reached. Wait for the quota to reset, then try again.";
+          "Groq is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Groq account usage and rate limits.";
         if (retryAfterSeconds !== undefined) {
           response.setHeader("Retry-After", String(retryAfterSeconds));
         }
-        console.error("Gemini API rate limit reached.");
+        console.error("Groq API rate limit reached.");
         return sendJson(response, 429, { error, retryAfterSeconds });
       }
 
@@ -216,29 +211,22 @@ async function handleChat(request, response) {
         result?.detail;
       const message =
         typeof detail === "string"
-          ? `Gemini API returned HTTP ${upstream.status}: ${detail}`
-          : `Gemini API returned HTTP ${upstream.status}. Check the API key, model access, and free-tier usage limits.`;
+          ? `Groq API returned HTTP ${upstream.status}: ${detail}`
+          : `Groq API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
       console.error(message);
       return sendJson(response, 502, { error: message });
     }
 
-    const reply = result.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text)
-      .filter((text) => typeof text === "string")
-      .join("");
+    const reply = result.choices?.[0]?.message?.content;
     if (typeof reply !== "string" || !reply.trim()) {
-      return sendJson(response, 502, {
-        error: result.promptFeedback?.blockReason
-          ? "Gemini blocked this request. Try rephrasing your message."
-          : "Gemini returned an empty response.",
-      });
+      return sendJson(response, 502, { error: "Groq returned an empty response." });
     }
 
     return sendJson(response, 200, { reply });
   } catch (error) {
-    console.error("Gemini request failed:", error.message);
+    console.error("Groq request failed:", error.message);
     return sendJson(response, 502, {
-      error: "Could not reach Gemini. Check your connection and try again.",
+      error: "Could not reach Groq. Check your connection and try again.",
     });
   }
 }
@@ -369,5 +357,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Gemini chat is running at http://${HOST}:${PORT}`);
+  console.log(`Groq chat is running at http://${HOST}:${PORT}`);
 });
