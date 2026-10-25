@@ -28,3 +28,5 @@ This project includes a `render.yaml` Blueprint for deploying the Node.js server
 4. Deploy the Blueprint and open the Render URL. Sign in using your `APP_PASSWORD`.
 
 Render supplies the port automatically. The app binds to `0.0.0.0` in the hosted environment and uses a signed, HTTP-only session cookie for sign-in.
+
+If chat reports that Mistral is rate-limiting Nova AI, wait and retry. If the issue continues, check the Mistral account's usage, credits, and rate limits. This app does not automatically retry rate-limited requests.

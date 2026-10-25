@@ -184,6 +184,27 @@ async function handleChat(request, response) {
 
     const result = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
+      if (upstream.status === 429) {
+        const retryAfter = upstream.headers.get("retry-after");
+        let retryAfterSeconds;
+        if (retryAfter && /^\d+$/.test(retryAfter)) {
+          retryAfterSeconds = Number(retryAfter);
+        } else if (retryAfter) {
+          const retryAt = Date.parse(retryAfter);
+          if (Number.isFinite(retryAt)) {
+            retryAfterSeconds = Math.max(1, Math.ceil((retryAt - Date.now()) / 1000));
+          }
+        }
+
+        const error =
+          "Mistral is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Mistral account usage, credits, and rate limits.";
+        if (retryAfterSeconds !== undefined) {
+          response.setHeader("Retry-After", String(retryAfterSeconds));
+        }
+        console.error("Mistral API rate limit reached.");
+        return sendJson(response, 429, { error, retryAfterSeconds });
+      }
+
       const detail =
         result?.error?.message ??
         result?.message ??
@@ -193,9 +214,7 @@ async function handleChat(request, response) {
           ? `Mistral API returned HTTP ${upstream.status}: ${detail}`
           : `Mistral API returned HTTP ${upstream.status}. Check the API key, account access, and usage limits.`;
       console.error(message);
-      return sendJson(response, upstream.status === 429 ? 429 : 502, {
-        error: message,
-      });
+      return sendJson(response, 502, { error: message });
     }
 
     const reply = result.choices?.[0]?.message?.content;

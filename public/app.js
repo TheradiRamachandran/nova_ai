@@ -62,6 +62,16 @@ async function sendMessage(text) {
     });
     const result = await response.json();
     if (!response.ok) {
+      if (response.status === 429) {
+        const retryAfter = Number(result.retryAfterSeconds);
+        const waitMessage =
+          Number.isFinite(retryAfter) && retryAfter > 0
+            ? ` Try again in about ${Math.ceil(retryAfter)} seconds.`
+            : "";
+        throw new Error(
+          `Mistral is rate-limiting Nova AI. Wait a little and try again. If this keeps happening, check your Mistral account usage, credits, and rate limits.${waitMessage}`,
+        );
+      }
       if (response.status === 401) {
         showAuthenticatedState(false);
         loginError.textContent = "Your session expired. Please sign in again.";
